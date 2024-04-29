@@ -2,6 +2,7 @@
 
 namespace App\Controller;
 
+use App\Dto\UserDto;
 use App\Entity\User;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -15,6 +16,19 @@ class UserController extends AbstractController
     {
         $userList = $entityManagerInterface->getRepository(User::class)->findAll();
 
-        return $this->json($userList);
+        $userDtoList = [];
+
+        /** @var User $user */
+        foreach ($userList as $user) {
+            $userDto = new UserDto();
+
+            $userDto->setId($user->getId());
+            $userDto->setPassword($user->getPassword());
+            $userDto->setUserName($user->getUserName());
+
+            $userDtoList[] = $userDto;
+        }
+
+        return $this->json($userDtoList);
     }
 }
