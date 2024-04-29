@@ -7,7 +7,7 @@ use Symfony\Component\Routing\Annotation\Route;
 
 class TestController extends AbstractController
 {
-    #[Route('/lucky/number')]
+    #[Route('/api/lucky/number')]
     public function number(): JsonResponse
     {
         $number = random_int(0, 100);
