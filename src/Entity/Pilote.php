@@ -2,11 +2,13 @@
 
 namespace App\Entity;
 
+use ApiPlatform\Metadata\ApiResource;
 use App\Repository\PiloteRepository;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
 
+#[ApiResource]
 #[ORM\Entity(repositoryClass: PiloteRepository::class)]
 class Pilote
 {
@@ -14,10 +16,6 @@ class Pilote
     #[ORM\GeneratedValue]
     #[ORM\Column]
     private ?int $id = null;
-
-    #[ORM\ManyToOne(inversedBy: 'pilotes')]
-    #[ORM\JoinColumn(nullable: false)]
-    private ?User $user = null;
 
     #[ORM\Column(length: 50)]
     private ?string $name = null;
@@ -28,16 +26,20 @@ class Pilote
     #[ORM\ManyToMany(targetEntity: Voiture::class, mappedBy: 'piloteId')]
     private Collection $cars;
 
+    #[ORM\ManyToOne(inversedBy: 'pilotes')]
+    #[ORM\JoinColumn(nullable: false)]
+    private ?User $ownedBy = null;
+
     /**
-     * @var Collection<int, Championnat|null>
+     * @var Collection<int, Championnat>
      */
-    #[ORM\ManyToMany(targetEntity: Championnat::class, mappedBy: 'PilotParticipant')]
-    private Collection $championnatSubscribed;
+    #[ORM\ManyToMany(targetEntity: Championnat::class, mappedBy: 'pilotesParticipants')]
+    private Collection $championnats;
 
     public function __construct()
     {
         $this->cars = new ArrayCollection();
-        $this->championnatSubscribed = new ArrayCollection();
+        $this->championnats = new ArrayCollection();
     }
 
     public function getId(): ?int
@@ -48,18 +50,6 @@ class Pilote
     public function setId(int $id): static
     {
         $this->id = $id;
-
-        return $this;
-    }
-
-    public function getUser(): ?User
-    {
-        return $this->user;
-    }
-
-    public function setUser(?User $user): static
-    {
-        $this->user = $user;
 
         return $this;
     }
@@ -103,28 +93,40 @@ class Pilote
         return $this;
     }
 
+    public function getOwnedBy(): ?User
+    {
+        return $this->ownedBy;
+    }
+
+    public function setOwnedBy(?User $ownedBy): static
+    {
+        $this->ownedBy = $ownedBy;
+
+        return $this;
+    }
+
     /**
      * @return Collection<int, Championnat>
      */
-    public function getChampionnatSubscribed(): Collection
+    public function getChampionnats(): Collection
     {
-        return $this->championnatSubscribed;
+        return $this->championnats;
     }
 
-    public function addChampionnatSubscribed(Championnat $championnatSubscribed): static
+    public function addChampionnat(Championnat $championnat): static
     {
-        if (!$this->championnatSubscribed->contains($championnatSubscribed)) {
-            $this->championnatSubscribed->add($championnatSubscribed);
-            $championnatSubscribed->addPilotParticipant($this);
+        if (!$this->championnats->contains($championnat)) {
+            $this->championnats->add($championnat);
+            $championnat->addPilotesParticipant($this);
         }
 
         return $this;
     }
 
-    public function removeChampionnatSubscribed(Championnat $championnatSubscribed): static
+    public function removeChampionnat(Championnat $championnat): static
     {
-        if ($this->championnatSubscribed->removeElement($championnatSubscribed)) {
-            $championnatSubscribed->removePilotParticipant($this);
+        if ($this->championnats->removeElement($championnat)) {
+            $championnat->removePilotesParticipant($this);
         }
 
         return $this;

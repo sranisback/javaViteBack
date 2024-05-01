@@ -2,11 +2,13 @@
 
 namespace App\Entity;
 
+use ApiPlatform\Metadata\ApiResource;
 use App\Repository\ChampionnatRepository;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
 
+#[ApiResource]
 #[ORM\Entity(repositoryClass: ChampionnatRepository::class)]
 class Championnat
 {
@@ -27,13 +29,14 @@ class Championnat
     /**
      * @var Collection<int, Pilote>
      */
-    #[ORM\ManyToMany(targetEntity: Pilote::class, inversedBy: 'ChampionnatSubscribed')]
-    private Collection $PilotParticipant;
+    #[ORM\ManyToMany(targetEntity: Pilote::class, inversedBy: 'championnats')]
+    private Collection $pilotesParticipants;
 
     public function __construct()
     {
         $this->userParticipant = new ArrayCollection();
         $this->PilotParticipant = new ArrayCollection();
+        $this->pilotesParticipants = new ArrayCollection();
     }
 
     public function getId(): ?int
@@ -87,24 +90,25 @@ class Championnat
     /**
      * @return Collection<int, Pilote>
      */
-    public function getPilotParticipant(): Collection
+    public function getPilotesParticipants(): Collection
     {
-        return $this->PilotParticipant;
+        return $this->pilotesParticipants;
     }
 
-    public function addPilotParticipant(Pilote $pilotParticipant): static
+    public function addPilotesParticipant(Pilote $pilotesParticipant): static
     {
-        if (!$this->PilotParticipant->contains($pilotParticipant)) {
-            $this->PilotParticipant->add($pilotParticipant);
+        if (!$this->pilotesParticipants->contains($pilotesParticipant)) {
+            $this->pilotesParticipants->add($pilotesParticipant);
         }
 
         return $this;
     }
 
-    public function removePilotParticipant(Pilote $pilotParticipant): static
+    public function removePilotesParticipant(Pilote $pilotesParticipant): static
     {
-        $this->PilotParticipant->removeElement($pilotParticipant);
+        $this->pilotesParticipants->removeElement($pilotesParticipant);
 
         return $this;
     }
+
 }

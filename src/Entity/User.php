@@ -2,6 +2,7 @@
 
 namespace App\Entity;
 
+use ApiPlatform\Metadata\ApiResource;
 use App\Repository\UserRepository;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
@@ -9,6 +10,7 @@ use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface;
 use Symfony\Component\Security\Core\User\UserInterface;
 
+#[ApiResource]
 #[ORM\Entity(repositoryClass: UserRepository::class)]
 #[ORM\UniqueConstraint(name: 'UNIQ_IDENTIFIER_USER_NAME', fields: ['userName'])]
 class User implements UserInterface, PasswordAuthenticatedUserInterface
@@ -34,16 +36,16 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     private ?string $password = null;
 
     /**
-     * @var Collection<int, Pilote>
-     */
-    #[ORM\OneToMany(mappedBy: 'userId', targetEntity: Pilote::class, orphanRemoval: true)]
-    private Collection $pilotes;
-
-    /**
      * @var Collection<int, Championnat>
      */
     #[ORM\ManyToMany(targetEntity: Championnat::class, mappedBy: 'userParticipant')]
     private Collection $championnatSubscribed;
+
+    /**
+     * @var Collection<int, Pilote>
+     */
+    #[ORM\OneToMany(mappedBy: 'ownedBy', targetEntity: Pilote::class, orphanRemoval: true)]
+    private Collection $pilotes;
 
     public function __construct()
     {
@@ -127,36 +129,6 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     }
 
     /**
-     * @return Collection<int, Pilote>
-     */
-    public function getPilotes(): Collection
-    {
-        return $this->pilotes;
-    }
-
-    public function addPilote(Pilote $pilote): static
-    {
-        if (!$this->pilotes->contains($pilote)) {
-            $this->pilotes->add($pilote);
-            $pilote->setUser($this);
-        }
-
-        return $this;
-    }
-
-    public function removePilote(Pilote $pilote): static
-    {
-        if ($this->pilotes->removeElement($pilote)) {
-            // set the owning side to null (unless already changed)
-            if ($pilote->getUser() === $this) {
-                $pilote->setUser(null);
-            }
-        }
-
-        return $this;
-    }
-
-    /**
      * @return Collection<int, Championnat>
      */
     public function getChampionnatSubscribed(): Collection
@@ -178,6 +150,36 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     {
         if ($this->championnatSubscribed->removeElement($championnatSubscribed)) {
             $championnatSubscribed->removeUserParticipant($this);
+        }
+
+        return $this;
+    }
+
+    /**
+     * @return Collection<int, Pilote>
+     */
+    public function getPilotes(): Collection
+    {
+        return $this->pilotes;
+    }
+
+    public function addPilote(Pilote $pilote): static
+    {
+        if (!$this->pilotes->contains($pilote)) {
+            $this->pilotes->add($pilote);
+            $pilote->setOwnedBy($this);
+        }
+
+        return $this;
+    }
+
+    public function removePilote(Pilote $pilote): static
+    {
+        if ($this->pilotes->removeElement($pilote)) {
+            // set the owning side to null (unless already changed)
+            if ($pilote->getOwnedBy() === $this) {
+                $pilote->setOwnedBy(null);
+            }
         }
 
         return $this;
