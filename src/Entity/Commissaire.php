@@ -4,6 +4,8 @@ namespace App\Entity;
 
 use ApiPlatform\Metadata\ApiResource;
 use App\Repository\CommissaireRepository;
+use Doctrine\Common\Collections\ArrayCollection;
+use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
 
 #[ApiResource]
@@ -18,8 +20,16 @@ class Commissaire
     #[ORM\Column(length: 25)]
     private ?string $nom = null;
 
-    #[ORM\OneToOne(mappedBy: 'commissaire', cascade: ['persist', 'remove'])]
-    private ?Race $raceCommissaire = null;
+    /**
+     * @var Collection<int, Race>
+     */
+    #[ORM\OneToMany(mappedBy: 'commissaire', targetEntity: Race::class)]
+    private Collection $races;
+
+    public function __construct()
+    {
+        $this->races = new ArrayCollection();
+    }
 
     public function getId(): ?int
     {
@@ -45,24 +55,32 @@ class Commissaire
         return $this;
     }
 
-    public function getRaceCommissaire(): ?Race
+    /**
+     * @return Collection<int, Race>
+     */
+    public function getRaces(): Collection
     {
-        return $this->raceCommissaire;
+        return $this->races;
     }
 
-    public function setRaceCommissaire(?Race $raceCommissaire): static
+    public function addRace(Race $race): static
     {
-        // unset the owning side of the relation if necessary
-        if ($raceCommissaire === null && $this->raceCommissaire !== null) {
-            $this->raceCommissaire->setCommissaire(null);
+        if (!$this->races->contains($race)) {
+            $this->races->add($race);
+            $race->setCommissaire($this);
         }
 
-        // set the owning side of the relation if necessary
-        if ($raceCommissaire !== null && $raceCommissaire->getCommissaire() !== $this) {
-            $raceCommissaire->setCommissaire($this);
-        }
+        return $this;
+    }
 
-        $this->raceCommissaire = $raceCommissaire;
+    public function removeRace(Race $race): static
+    {
+        if ($this->races->removeElement($race)) {
+            // set the owning side to null (unless already changed)
+            if ($race->getCommissaire() === $this) {
+                $race->setCommissaire(null);
+            }
+        }
 
         return $this;
     }

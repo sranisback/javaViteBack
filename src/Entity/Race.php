@@ -3,6 +3,13 @@
 namespace App\Entity;
 
 use ApiPlatform\Metadata\ApiResource;
+use ApiPlatform\Metadata\Delete;
+use ApiPlatform\Metadata\Get;
+use ApiPlatform\Metadata\GetCollection;
+use ApiPlatform\Metadata\Patch;
+use ApiPlatform\Metadata\Post;
+use ApiPlatform\Metadata\Put;
+use App\Processor\RaceProcessor;
 use App\Repository\RaceRepository;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
@@ -10,6 +17,12 @@ use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 
 #[ApiResource]
+#[Post(processor: RaceProcessor::class)]
+#[Get]
+#[GetCollection]
+#[Put]
+#[Delete]
+#[Patch]
 #[ORM\Entity(repositoryClass: RaceRepository::class)]
 class Race
 {
@@ -20,13 +33,6 @@ class Race
 
     #[ORM\Column(type: Types::DATE_MUTABLE, nullable: true)]
     private ?\DateTimeInterface $date = null;
-
-    #[ORM\OneToOne(inversedBy: 'racePlayer', cascade: ['persist', 'remove'])]
-    #[ORM\JoinColumn(nullable: false)]
-    private ?Circuit $circuit = null;
-
-    #[ORM\OneToOne(inversedBy: 'raceCommissaire', cascade: ['persist', 'remove'])]
-    private ?Commissaire $commissaire = null;
 
     #[ORM\Column(nullable: true)]
     private ?int $nbJoueurs = null;
@@ -58,8 +64,15 @@ class Race
     /**
      * @var Collection<int, RaceData>
      */
-    #[ORM\OneToMany(mappedBy: 'race', targetEntity: RaceData::class, orphanRemoval: true)]
+    #[ORM\OneToMany(mappedBy: 'race', targetEntity: RaceData::class, cascade: ['persist', 'remove'], orphanRemoval: true)]
     private Collection $data;
+
+    #[ORM\ManyToOne(inversedBy: 'racePlayed')]
+    #[ORM\JoinColumn(nullable: false)]
+    private ?Circuit $circuit = null;
+
+    #[ORM\ManyToOne(inversedBy: 'races')]
+    private ?Commissaire $commissaire = null;
 
     public function __construct()
     {
@@ -86,30 +99,6 @@ class Race
     public function setDate(?\DateTimeInterface $date): static
     {
         $this->date = $date;
-
-        return $this;
-    }
-
-    public function getCircuit(): ?Circuit
-    {
-        return $this->circuit;
-    }
-
-    public function setCircuit(Circuit $circuit): static
-    {
-        $this->circuit = $circuit;
-
-        return $this;
-    }
-
-    public function getCommissaire(): ?Commissaire
-    {
-        return $this->commissaire;
-    }
-
-    public function setCommissaire(?Commissaire $commissaire): static
-    {
-        $this->commissaire = $commissaire;
 
         return $this;
     }
@@ -248,6 +237,30 @@ class Race
                 $data->setRace(null);
             }
         }
+
+        return $this;
+    }
+
+    public function getCircuit(): ?Circuit
+    {
+        return $this->circuit;
+    }
+
+    public function setCircuit(?Circuit $circuit): static
+    {
+        $this->circuit = $circuit;
+
+        return $this;
+    }
+
+    public function getCommissaire(): ?Commissaire
+    {
+        return $this->commissaire;
+    }
+
+    public function setCommissaire(?Commissaire $commissaire): static
+    {
+        $this->commissaire = $commissaire;
 
         return $this;
     }

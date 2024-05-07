@@ -4,6 +4,8 @@ namespace App\Entity;
 
 use ApiPlatform\Metadata\ApiResource;
 use App\Repository\CircuitRepository;
+use Doctrine\Common\Collections\ArrayCollection;
+use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
 
 #[ApiResource]
@@ -18,8 +20,16 @@ class Circuit
     #[ORM\Column(length: 25)]
     private ?string $nom = null;
 
-    #[ORM\OneToOne(mappedBy: 'circuit', cascade: ['persist', 'remove'])]
-    private ?Race $racePlayer = null;
+    /**
+     * @var Collection<int, Race>
+     */
+    #[ORM\OneToMany(mappedBy: 'circuit', targetEntity: Race::class, orphanRemoval: true)]
+    private Collection $racePlayed;
+
+    public function __construct()
+    {
+        $this->racePlayed = new ArrayCollection();
+    }
 
     public function getId(): ?int
     {
@@ -45,20 +55,34 @@ class Circuit
         return $this;
     }
 
-    public function getRacePlayer(): ?Race
+    /**
+     * @return Collection<int, Race>
+     */
+    public function getRacePlayed(): Collection
     {
-        return $this->racePlayer;
+        return $this->racePlayed;
     }
 
-    public function setRacePlayer(Race $racePlayer): static
+    public function addRacePlayed(Race $racePlayed): static
     {
-        // set the owning side of the relation if necessary
-        if ($racePlayer->getCircuit() !== $this) {
-            $racePlayer->setCircuit($this);
+        if (!$this->racePlayed->contains($racePlayed)) {
+            $this->racePlayed->add($racePlayed);
+            $racePlayed->setCircuit($this);
         }
-
-        $this->racePlayer = $racePlayer;
 
         return $this;
     }
+
+    public function removeRacePlayed(Race $racePlayed): static
+    {
+        if ($this->racePlayed->removeElement($racePlayed)) {
+            // set the owning side to null (unless already changed)
+            if ($racePlayed->getCircuit() === $this) {
+                $racePlayed->setCircuit(null);
+            }
+        }
+
+        return $this;
+    }
+
 }
